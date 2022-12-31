@@ -5,6 +5,7 @@ import makeManifest from "./utils/plugins/make-manifest";
 import customDynamicImport from "./utils/plugins/custom-dynamic-import";
 import addHmr from "./utils/plugins/add-hmr";
 import manifest from "./manifest";
+import { cacheBuild, CacheConfig } from "rollup-cache";
 
 const root = resolve(__dirname, "src");
 const pagesDir = resolve(root, "pages");
@@ -17,6 +18,14 @@ const isProduction = !isDev;
 
 // ENABLE HMR IN BACKGROUND SCRIPT
 const enableHmrInBackgroundScript = true;
+
+const cacheConfig: CacheConfig = {
+  name: "my-chrome-extension",
+  dependencies: ["vite.config.ts", "yarn.lock"],
+  // Add the packages you want to prebuild to speed up the build.
+  prebuild: ["react", "react-dom"],
+  enabled: isDev,
+};
 
 export default defineConfig({
   resolve: {
@@ -39,7 +48,7 @@ export default defineConfig({
     // sourcemap: isDev,
     minify: isProduction,
     reportCompressedSize: isProduction,
-    rollupOptions: {
+    rollupOptions: cacheBuild(cacheConfig, {
       input: {
         devtools: resolve(pagesDir, "devtools", "index.html"),
         panel: resolve(pagesDir, "panel", "index.html"),
@@ -61,8 +70,9 @@ export default defineConfig({
           const name = assetFolder + firstUpperCase(_name);
           return `assets/[ext]/${name}.chunk.[ext]`;
         },
+        dir: "dist",
       },
-    },
+    }),
   },
 });
 
